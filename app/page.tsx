@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { generateReply, Tone } from "./lib/ai";
+import { findXiaoboQuotes } from "./lib/quotes";
 
-type View = "home" | "chat" | "about" | "reading" | "favorites" | "letter" | "diagnosis" | "404";
+type View = "home" | "chat" | "about" | "reading" | "quotes" | "favorites" | "letter" | "diagnosis" | "404";
 type Message = { id: string; role: "user" | "assistant"; text: string; saved?: boolean; error?: boolean };
 type Conversation = { id: string; title: string; createdAt: number; messages: Message[] };
 type Favorite = { id: string; text: string; date: string };
@@ -84,6 +85,8 @@ export default function Home() {
   const [letterTone, setLetterTone] = useState("保留原文");
   const [toolResult, setToolResult] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
+  const [quoteScenario, setQuoteScenario] = useState("");
+  const [quoteNonce, setQuoteNonce] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,7 +116,17 @@ export default function Home() {
   }, [loading]);
 
   const active = conversations.find((c) => c.id === activeId) || conversations[0];
+  const matchedQuotes = useMemo(
+    () => findXiaoboQuotes(quoteScenario, quoteNonce),
+    [quoteScenario, quoteNonce],
+  );
   const go = (next: View) => { setView(next); setMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
+  const copyQuote = async (text: string, source: string) => {
+    await navigator.clipboard.writeText(`“${text}”\n——王小波 ${source}`);
+    setNotice("句子和出处已复制");
+    setTimeout(() => setNotice(""), 1800);
+  };
 
   const patchActive = (updater: (c: Conversation) => Conversation) => {
     setConversations((all) => all.map((c) => c.id === activeId ? updater(c) : c));
@@ -227,6 +240,7 @@ export default function Home() {
       <button className="brand" onClick={() => go("home")}><Stamp /><span>和小波聊聊</span></button>
       <nav className="desktop-nav" aria-label="主导航">
         <button onClick={() => go("chat")}>谈谈</button>
+        <button onClick={() => go("quotes")}>句子处方</button>
         <button onClick={() => go("reading")}>阅读入口</button>
         <button onClick={() => go("favorites")}>句子档案</button>
         <button onClick={() => go("about")}>关于</button>
@@ -240,7 +254,7 @@ export default function Home() {
 
   const mobileMenu = menuOpen && (
     <div className="mobile-drawer">
-      {([["home", "首页"], ["chat", "开始谈谈"], ["reading", "阅读入口"], ["favorites", "句子档案"], ["letter", "写一封信"], ["diagnosis", "荒诞诊断书"], ["about", "关于本站"]] as [View, string][]).map(([v, label]) => <button key={v} onClick={() => go(v)}>{label}</button>)}
+      {([["home", "首页"], ["chat", "开始谈谈"], ["quotes", "句子处方"], ["reading", "阅读入口"], ["favorites", "句子档案"], ["letter", "写一封信"], ["diagnosis", "荒诞诊断书"], ["about", "关于本站"]] as [View, string][]).map(([v, label]) => <button key={v} onClick={() => go(v)}>{label}</button>)}
     </div>
   );
 
@@ -292,6 +306,7 @@ export default function Home() {
         <nav>
           <button onClick={() => createChat(randomQuestions[Math.floor(Math.random() * randomQuestions.length)])}>⌁ 随机话题</button>
           <button onClick={() => createChat(todayQuestion())}>◷ 今日一问</button>
+          <button onClick={() => go("quotes")}>✦ 句子处方</button>
           <button onClick={() => go("letter")}>✉ 把烦恼写成信</button>
           <button onClick={() => go("diagnosis")}>⌘ 荒诞诊断书</button>
           <button onClick={() => go("favorites")}>◇ 句子档案</button>
@@ -361,6 +376,46 @@ export default function Home() {
       <div className="reading-note"><Stamp /><p>这里不预置大段作品摘录。一本书最不走运的命运，大概是被拆成许多句子，在互联网上轮流证明它没说过的话。</p></div>
     </section>}
 
+    {view === "quotes" && <section className="content-page quote-page">
+      {pageHeader("08", "句子处方", "写下你正在经历的情景，从作品里找几句可以带走的话。")}
+      <div className="quote-lab">
+        <form className="quote-query" onSubmit={(e) => { e.preventDefault(); setQuoteNonce((value) => value + 1); }}>
+          <span>SCENE / 情景</span>
+          <label htmlFor="quote-scene">你现在遇到了什么？</label>
+          <textarea
+            id="quote-scene"
+            value={quoteScenario}
+            onChange={(e) => setQuoteScenario(e.target.value)}
+            placeholder="例如：我很怕考研失败，也不知道自己究竟想不想继续读下去。"
+          />
+          <div className="scene-chips">
+            {["考试焦虑", "不知道要不要换工作", "想念一个人", "父母不理解我的选择", "生活越来越无聊", "写不下去了"].map((scene) =>
+              <button type="button" key={scene} onClick={() => { setQuoteScenario(scene); setQuoteNonce((value) => value + 1); }}>{scene}</button>
+            )}
+          </div>
+          <div className="quote-actions">
+            <button className="primary" type="submit">{quoteScenario.trim() ? "重新匹配" : "随便看看"}</button>
+            <button className="secondary" type="button" onClick={() => setQuoteNonce((value) => value + 1)}>换一组</button>
+          </div>
+          <p className="quote-source-note">以下均为王小波作品中的短句，出处按所提供的全集文本逐句核对。网站解读不是原文，也不是王小波言论。</p>
+        </form>
+        <div className="quote-results" aria-live="polite">
+          <header><span>{quoteScenario.trim() ? "根据这个情景" : "今日随手翻到"}</span><b>{String(matchedQuotes.length).padStart(2, "0")} 句</b></header>
+          {matchedQuotes.map((quote, index) => <article key={`${quote.id}-${quoteNonce}`}>
+            <div className="quote-number">0{index + 1}</div>
+            <div className="quote-body">
+              <span>{quote.category}</span>
+              <blockquote>“{quote.text}”</blockquote>
+              <cite>——王小波 {quote.source}</cite>
+              <div className="quote-note"><b>此刻的用法 · 网站解读</b><p>{quote.note}</p></div>
+              <button onClick={() => copyQuote(quote.text, quote.source)}>复制句子与出处</button>
+            </div>
+          </article>)}
+        </div>
+      </div>
+      <div className="quote-copyright"><Stamp /><p><b>关于引用</b><br />这里仅展示用于情景检索的短句，不替代完整作品。请保留作者与出处，并通过正规出版物阅读上下文。</p></div>
+    </section>}
+
     {view === "favorites" && <section className="content-page">
       {pageHeader("04", "句子档案", "只保存你在对话里真正想留下的东西。")}
       {!favorites.length ? <div className="empty-archive"><span>◇</span><h2>档案还是空的</h2><p>这很好，说明暂时还没有句子被迫承担纪念碑的工作。</p><button className="primary" onClick={() => go("chat")}>去谈谈</button></div> :
@@ -379,6 +434,7 @@ export default function Home() {
     </section>}
 
     {view === "404" && <section className="not-found"><b>404</b><h1>你来到了一页不存在的地方。</h1><p>这倒不算罕见，人有时也会走到一些并不存在的答案里。</p><button className="primary" onClick={() => go("home")}>回到首页</button></section>}
+    {notice && <div className="toast">{notice}</div>}
     <footer className="inner-footer"><p>和小波聊聊 · 非官方文学互动项目</p><p>所有对话均为 AI 生成内容</p><p className="credit">created by Lee</p></footer>
   </main>;
 }
