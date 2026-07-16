@@ -102,6 +102,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--red); ou
 .home-grid span { color: var(--red); font: 13px Georgia,serif; }.home-grid h2 { font-size: 23px; margin: 18px 0; }.home-grid p { color: var(--muted); line-height: 1.8; font-size: 14px; }
 .site-shell > footer { min-height: 260px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 36px; text-align: left; }
 .site-shell > footer p { line-height: 1.8; }.site-shell > footer button { color: var(--red); border-bottom: 1px solid var(--red); padding: 6px 0; }
+.credit { color: var(--red); font: 10px Georgia, serif; letter-spacing: .16em; }
 
 .chat-page { height: 100vh; display: grid; grid-template-columns: 270px 1fr; overflow: hidden; background: var(--paper); }
 .chat-sidebar { background: var(--paper-deep); border-right: 1px solid var(--line); padding: 23px 17px 16px; display: flex; flex-direction: column; min-height: 0; z-index: 30; }
@@ -115,6 +116,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--red); ou
 .history-list .delete { opacity: 0; padding: 6px 10px; color: var(--red); }.history-list > div:hover .delete { opacity: 1; }
 .chat-sidebar nav button, .side-bottom button { display: block; width: 100%; text-align: left; padding: 10px 12px; color: var(--muted); font-size: 12px; }.chat-sidebar nav button:hover { color: var(--red); }
 .side-bottom { margin-top: auto; border-top: 1px solid var(--line); padding-top: 8px; }
+.side-bottom small { display: block; padding: 5px 12px 0; color: var(--red); font: 9px Georgia, serif; letter-spacing: .14em; }
 .chat-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .chat-header { height: 68px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; background: rgba(238,233,220,.75); backdrop-filter: blur(10px); }
 :root[data-theme="dark"] .chat-header { background: rgba(25,26,23,.75); }

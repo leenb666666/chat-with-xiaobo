@@ -141,7 +141,8 @@ export default function Home() {
       messages: [...c.messages, userMessage],
     } : c));
     try {
-      const reply = await generateReply(text, tone, variant);
+      const history = conversations.find((c) => c.id === id)?.messages ?? [];
+      const reply = await generateReply(text, tone, variant, history);
       setConversations((all) => all.map((c) => c.id === id ? {
         ...c, messages: [...c.messages, { id: uid(), role: "assistant", text: reply }],
       } : c));
@@ -273,7 +274,7 @@ export default function Home() {
         <div><span>02</span><h2>幽默，不是油滑</h2><p>看见生活的荒诞，也保留对真实痛苦的尊重。</p></div>
         <div><span>03</span><h2>自由，不是口号</h2><p>把“别人怎么看”与“事情是否值得”分开来谈。</p></div>
       </section>
-      <footer><Stamp /><p>不是让一个作家重新开口，<br />而是给思考留一张椅子。</p><button onClick={() => go("about")}>了解这个项目</button></footer>
+      <footer><Stamp /><p>不是让一个作家重新开口，<br />而是给思考留一张椅子。</p><button onClick={() => go("about")}>了解这个项目</button><span className="credit">created by Lee</span></footer>
     </main>;
   }
 
@@ -296,7 +297,7 @@ export default function Home() {
           <button onClick={() => go("favorites")}>◇ 句子档案</button>
           <button onClick={() => go("about")}>ⓘ 关于本站</button>
         </nav>
-        <div className="side-bottom"><button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? "◐ 深色模式" : "◑ 浅色模式"}</button></div>
+        <div className="side-bottom"><button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? "◐ 深色模式" : "◑ 浅色模式"}</button><small>created by Lee</small></div>
       </aside>
       <section className="chat-main">
         <div className="chat-header">
@@ -378,6 +379,6 @@ export default function Home() {
     </section>}
 
     {view === "404" && <section className="not-found"><b>404</b><h1>你来到了一页不存在的地方。</h1><p>这倒不算罕见，人有时也会走到一些并不存在的答案里。</p><button className="primary" onClick={() => go("home")}>回到首页</button></section>}
-    <footer className="inner-footer"><p>和小波聊聊 · 非官方文学互动项目</p><p>所有对话均为 AI 生成内容</p></footer>
+    <footer className="inner-footer"><p>和小波聊聊 · 非官方文学互动项目</p><p>所有对话均为 AI 生成内容</p><p className="credit">created by Lee</p></footer>
   </main>;
 }
